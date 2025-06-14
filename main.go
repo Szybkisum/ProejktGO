@@ -1,19 +1,19 @@
 package main
 
-
 import (
 	"fmt"
 	"log"
 	"math/rand"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Game struct {
 	ScreenWidth, ScreenHeight int
-	Capacity int
-	World *World
-	IsInitialized, IsPaused bool
+	Capacity                  int
+	World                     *World
+	IsInitialized, IsPaused   bool
 }
 
 func (g *Game) Update() error {
@@ -98,4 +98,4 @@ func main() {
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
-} 
+}

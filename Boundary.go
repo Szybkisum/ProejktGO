@@ -16,8 +16,7 @@ func NewBoundary(X, Y, Width, Height float64) *Boundary {
 func (b *Boundary) Contains(pos *Position) bool {
 	halfWidth := b.Width / 2
 	halfHeight := b.Height / 2
-	return 
-		pos.X >= b.X - halfWidth &&
+	return pos.X >= b.X - halfWidth &&
 		pos.X <= b.X + halfWidth &&
 		pos.Y >= b.Y - halfHeight &&
 		pos.Y <= b.Y + halfHeight
