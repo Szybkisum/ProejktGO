@@ -1,52 +1,54 @@
 package main
 
 type LivingEntity struct {
-    Speed,
-    SeeingRange,
-    Energy,
-    MaxEnergy,
-    EnergyToReproduce float64
-    ReproductionCooldown,
-    MaxCooldown int
-    IsDead bool
+	Speed,
+	SeeingRange,
+	Energy,
+	MaxEnergy,
+	EnergyToReproduce float64
+	ReproductionCooldown,
+	MaxCooldown int
+	isDead bool
 }
 
 func (e *LivingEntity) RecoverFromReproduction() {
-    if e.ReproductionCooldown > 0 {
-        e.ReproductionCooldown--
-    }
+	if e.ReproductionCooldown > 0 {
+		e.ReproductionCooldown--
+	}
 }
 
 func (e *LivingEntity) BurnEnergy() {
-    e.Energy--
+	e.Energy--
 }
 
 func (e *LivingEntity) Metabolise() {
-    e.BurnEnergy()
-    if (e.Energy <= 0) {
-        e.Die()
-    }
-    e.RecoverFromReproduction()
+	e.BurnEnergy()
+	if e.Energy <= 0 {
+		e.Die()
+	}
+	e.RecoverFromReproduction()
 }
 
 func (e *LivingEntity) Die() {
-    e.IsDead = true
+	e.isDead = true
 }
 
+func (e *LivingEntity) IsDead() bool {
+	return e.isDead
+}
 
 func (e *LivingEntity) IsHungry() bool {
-    return (e.Energy / e.MaxEnergy) < 0.3
+	return (e.Energy / e.MaxEnergy) < 0.3
 }
 
 func (e *LivingEntity) IsReadyToReproduce() bool {
-    return e.Energy >= e.EnergyToReproduce
+	return e.ReproductionCooldown <= 0 && e.Energy >= e.EnergyToReproduce
 }
 
-
 func (e *LivingEntity) RecoverEnergy() {
-    e.Energy = e.MaxEnergy
+	e.Energy = e.MaxEnergy
 }
 
 func (e *LivingEntity) StartReproductionCooldown() {
-    e.ReproductionCooldown = e.MaxCooldown
-} 
+	e.ReproductionCooldown = e.MaxCooldown
+}

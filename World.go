@@ -1,37 +1,79 @@
 package main
 
+import "math/rand/v2"
+
 type World struct {
-	Quadtree *QuadTree
-	Rabbits []*Rabbit
-	Foxes []*Fox
-	Grass []*Grass
-    WorldBoundary *Boundary
+	Quadtree                 *QuadTree
+	Rabbits                  []*Rabbit
+	Foxes                    []*Fox
+	Grass                    []*Grass
+	WorldBoundary            *Boundary
+	GlobalGrassSpawnCooldown int
 }
 
+func (w *World) IsGlobalGrassReadyToSpawn() bool {
+	return w.GlobalGrassSpawnCooldown <= 0
+}
+
+func (w *World) StartGlobalGrassSpawnCooldown() {
+	w.GlobalGrassSpawnCooldown = GLOBAL_GRASS_SPAWN_INTERVAL
+}
+
+func (w *World) SpawnGlobalGrass() (newGrass Entity) {
+	newGrass = NewGrass(Position{X: rand.Float64() * w.WorldBoundary.Width, Y: rand.Float64() * w.WorldBoundary.Height})
+	w.StartGlobalGrassSpawnCooldown()
+	return
+}
 
 func (w *World) GetAllEntities() []Entity {
-    all := make([]Entity, 0, len(w.Rabbits) + len(w.Foxes) + len(w.Grass))
-    for _, r := range w.Rabbits { all = append(all, r) }
-    for _, f := range w.Foxes { all = append(all, f) }
-    for _, gr := range w.Grass { all = append(all, gr) }
-    return all
+	all := make([]Entity, 0, len(w.Rabbits)+len(w.Foxes)+len(w.Grass))
+	for _, r := range w.Rabbits {
+		all = append(all, r)
+	}
+	for _, f := range w.Foxes {
+		all = append(all, f)
+	}
+	for _, gr := range w.Grass {
+		all = append(all, gr)
+	}
+	return all
 }
 
 func (w *World) RemoveDeadEntities() {
-    newRabbits := []*Rabbit{}
-    for _, r := range w.Rabbits {
-        if (!r.IsDead) {
-            newRabbits = append(newRabbits, r)
-        }
-    }
+	newRabbits := []*Rabbit{}
+	for _, r := range w.Rabbits {
+		if !r.IsDead() {
+			newRabbits = append(newRabbits, r)
+		}
+	}
+	w.Rabbits = newRabbits
 
-    w.Rabbits = newRabbits
-    newFoxes := []*Fox{}
+	newGrass := []*Grass{}
+	for _, gr := range w.Grass {
+		if !gr.IsDead() {
+			newGrass = append(newGrass, gr)
+		}
+	}
+	w.Grass = newGrass
 
-    for _, f := range w.Foxes {
-        if (!f.IsDead) {
-            newFoxes = append(newFoxes, f)
-        }
-    }
-    w.Foxes = newFoxes
-} 
+	newFoxes := []*Fox{}
+	for _, f := range w.Foxes {
+		if !f.IsDead() {
+			newFoxes = append(newFoxes, f)
+		}
+	}
+	w.Foxes = newFoxes
+}
+
+func (w *World) AddNewEntities(entities []Entity) {
+	for _, e := range entities {
+		switch eType := e.(type) {
+		case *Rabbit:
+			w.Rabbits = append(w.Rabbits, eType)
+		case *Fox:
+			w.Foxes = append(w.Foxes, eType)
+		case *Grass:
+			w.Grass = append(w.Grass, eType)
+		}
+	}
+}

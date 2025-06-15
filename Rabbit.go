@@ -30,107 +30,116 @@ func NewRabbit(pos Position) *Rabbit {
 	}
 }
 
+func (r *Rabbit) IsDangerouslyClose(other Entity) bool {
+	pos := r.GetPosition()
+	otherPos := other.GetPosition()
+
+	distSq := pos.CalculateDistanceSquared(otherPos)
+	halfSeeingRange := r.SeeingRange / 2
+	return distSq < halfSeeingRange*halfSeeingRange
+}
+
 func (r *Rabbit) RandomMove() {
 	deltaX := ((rand.Float64() * 2) - 1) * r.Speed
 	deltaY := ((rand.Float64() * 2) - 1) * r.Speed
 	r.Pos.Move(deltaX, deltaY)
 }
 
+func (r *Rabbit) Eat(gr *Grass) {
+	r.RecoverEnergy()
+	gr.Die()
+}
+
+func (r *Rabbit) Reproduce(other *Rabbit) *Rabbit {
+	midpointX := (r.Pos.X + other.Pos.X) / 2
+	midpointY := (r.Pos.Y + other.Pos.Y) / 2
+
+	offsetX := (rand.Float64()*2 - 1) * 2.0
+	offsetY := (rand.Float64()*2 - 1) * 2.0
+
+	newPos := Position{X: midpointX + offsetX, Y: midpointY + offsetY}
+	newRabbit := NewRabbit(newPos)
+
+	r.StartReproductionCooldown()
+	other.StartReproductionCooldown()
+
+	return newRabbit
+}
+
 func (r *Rabbit) MoveToward(other Entity) {
 	pos := r.GetPosition()
 	targetPos := other.GetPosition()
-// dist := math.Sqrt(r.Pos.CalculateDistanceSquared(targetPos))
-// if dist <= r.Speed {
-// pos.MoveTo(targetPos.X, targetPos.Y)
-// } else {
-        directionX := targetPos.X - pos.X
-        directionY := targetPos.Y - pos.Y
-        length := math.Sqrt(directionX*directionX + directionY*directionY)
-        if length > 0 {
-            moveX := (directionX / length) * r.Speed
-            moveY := (directionY / length) * r.Speed
-            pos.Move(moveX, moveY)
-        }
-// }
+
+	directionX := targetPos.X - pos.X
+	directionY := targetPos.Y - pos.Y
+
+	length := math.Sqrt(directionX*directionX + directionY*directionY)
+	if length > 0 {
+		moveX := (directionX / length) * r.Speed
+		moveY := (directionY / length) * r.Speed
+		pos.Move(moveX, moveY)
+	}
 }
 
-func (r *Rabbit) Decide(w *World) {
+func (r *Rabbit) MoveAwayFrom(other Entity) {
+	pos := r.GetPosition()
+	otherPos := other.GetPosition()
+
+	directionX := pos.X - otherPos.X
+	directionY := pos.Y - otherPos.Y
+
+	length := math.Sqrt(directionX*directionX + directionY*directionY)
+	if length > 0 {
+		moveX := (directionX / length) * r.Speed
+		moveY := (directionY / length) * r.Speed
+		pos.Move(moveX, moveY)
+	}
+}
+
+func (r *Rabbit) Update(w *World) (newEntity Entity) {
+	r.Metabolise()
+
 	pos := r.GetPosition()
 	doubledSeeingRange := r.SeeingRange * 2
 	searchArea := Boundary{X: pos.X, Y: pos.Y, Width: doubledSeeingRange, Height: doubledSeeingRange}
 	found := w.Quadtree.Query(&searchArea)
 
 	if r.IsHungry() {
-		_, grass := getClosestFoxAndGrass(r, found)
-		if grass != nil {
-			r.MoveToward(grass)
-			return
+		fox, grass := getClosestFoxAndGrass(r, found)
+		if fox != nil && r.IsDangerouslyClose(fox) {
+			r.MoveAwayFrom(fox)
+		} else if grass != nil {
+			if r.IsInRange(grass) {
+				r.Eat(grass)
+			} else {
+				r.MoveToward(grass)
+			}
+		} else {
+			r.RandomMove()
 		}
-	// } else if r.IsReadyToReproduce() {
-	// fox, rabbit := getClosestFoxAndRabbitReadyToReproduce(r, found)
+	} else if r.IsReadyToReproduce() {
+		fox, rabbit := getClosestFoxAndRabbitReadyToReproduce(r, found)
+		if fox != nil && r.IsDangerouslyClose(fox) {
+			r.MoveAwayFrom(fox)
+		}
+		if rabbit != nil {
+			if r.IsInRange(rabbit) {
+				newEntity = r.Reproduce(rabbit)
+				w.WorldBoundary.FitIntoBoundary(newEntity.GetPosition())
+			} else {
+				r.MoveToward(rabbit)
+			}
+		} else {
+			r.RandomMove()
+		}
+	} else {
+		fox := getClosestFox(r, found)
+		if fox != nil && r.IsDangerouslyClose(fox) {
+			r.MoveAwayFrom(fox)
+		} else {
+			r.RandomMove()
+		}
 	}
-	r.RandomMove()
-}
-
-func (r *Rabbit) Update(w *World) {
-	r.Metabolise()
-	r.Decide(w)
 	w.WorldBoundary.FitIntoBoundary(&r.Pos)
-}
-
-func getClosestFoxAndGrass(r *Rabbit, entities []Entity) (fox Entity, grass Entity) {
-	closestFoxDistanceSq := math.MaxFloat64
-	closestGrassDistanceSq := math.MaxFloat64
-
-	var otherPos *Position
-	var dist float64
-
-	for _, e := range entities {
-		otherPos = e.GetPosition()
-		dist = otherPos.CalculateDistanceSquared(r.GetPosition())
-		switch e.(type) {
-			case *Fox:
-				if closestFoxDistanceSq >= dist {
-					closestFoxDistanceSq = dist
-					fox = e
-			}
-
-			case *Grass:
-				if closestGrassDistanceSq >= dist {
-					closestGrassDistanceSq = dist
-					grass = e
-			}
-
-			default:
-				continue
-		}
-	}
 	return
 }
-
-
-// func getClosestFoxAndRabbitReadyToReproduce(r *Rabbit, entities []Entity) (fox Entity, rabbit Entity) {
-// seeingDistanceSq := r.SeeingRange * r.SeeingRange
-// closestFoxDistanceSq := seeingDistanceSq
-// closestRabbitDistanceSq := seeingDistanceSq
-// var otherPos *Position
-// var dist float64
-// for _, e := range entities {
-// otherPos = e.GetPosition()
-// dist = otherPos.CalculateDistanceSquared(r.GetPosition())
-// switch e.(type) {
-// case *Fox:
-// if closestFoxDistanceSq >= dist {
-// closestFoxDistanceSq = dist
-// }
-// case *Rabbit:
-// // sprawdzi─ç IsReadyToReproduce
-// if closestRabbitDistanceSq >= dist {
-// closestRabbitDistanceSq = dist
-// }
-// default:
-// continue
-// }
-// }
-// return
-// } 

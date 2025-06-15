@@ -2,14 +2,15 @@ package main
 
 import (
 	"image/color"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type QuadTree struct {
-	Boundary *Boundary
-	Capacity int
-	Entities []Entity
+	Boundary  *Boundary
+	Capacity  int
+	Entities  []Entity
 	NorthWest *QuadTree
 	NorthEast *QuadTree
 	SouthWest *QuadTree
@@ -17,25 +18,23 @@ type QuadTree struct {
 	IsDivided bool
 }
 
-
 func NewQuadTree(Boundary *Boundary, capacity int) *QuadTree {
 	return &QuadTree{
-		Boundary: Boundary,
-		Capacity: capacity,
+		Boundary:  Boundary,
+		Capacity:  capacity,
 		IsDivided: false,
 	}
 }
-
 
 func (qt *QuadTree) Subdivide() {
 	newWidth := qt.Boundary.Width / 2
 	newHeight := qt.Boundary.Height / 2
 	halfNewWidth := newWidth / 2
 	halfNewHeight := newHeight / 2
-	qt.NorthWest = NewQuadTree(NewBoundary(qt.Boundary.X - halfNewWidth, qt.Boundary.Y - halfNewHeight, newWidth, newHeight), qt.Capacity)
-	qt.NorthEast = NewQuadTree(NewBoundary(qt.Boundary.X + halfNewWidth, qt.Boundary.Y - halfNewHeight, newWidth, newHeight), qt.Capacity)
-	qt.SouthWest = NewQuadTree(NewBoundary(qt.Boundary.X - halfNewWidth, qt.Boundary.Y + halfNewHeight, newWidth, newHeight), qt.Capacity)
-	qt.SouthEast = NewQuadTree(NewBoundary(qt.Boundary.X + halfNewWidth, qt.Boundary.Y + halfNewHeight, newWidth, newHeight), qt.Capacity)
+	qt.NorthWest = NewQuadTree(NewBoundary(qt.Boundary.X-halfNewWidth, qt.Boundary.Y-halfNewHeight, newWidth, newHeight), qt.Capacity)
+	qt.NorthEast = NewQuadTree(NewBoundary(qt.Boundary.X+halfNewWidth, qt.Boundary.Y-halfNewHeight, newWidth, newHeight), qt.Capacity)
+	qt.SouthWest = NewQuadTree(NewBoundary(qt.Boundary.X-halfNewWidth, qt.Boundary.Y+halfNewHeight, newWidth, newHeight), qt.Capacity)
+	qt.SouthEast = NewQuadTree(NewBoundary(qt.Boundary.X+halfNewWidth, qt.Boundary.Y+halfNewHeight, newWidth, newHeight), qt.Capacity)
 	qt.IsDivided = true
 
 	for _, e := range qt.Entities {
@@ -44,7 +43,6 @@ func (qt *QuadTree) Subdivide() {
 
 	qt.Entities = nil
 }
-
 
 func (qt *QuadTree) Insert(e Entity) {
 	if !qt.Boundary.Contains(e.GetPosition()) {
@@ -70,9 +68,8 @@ func (qt *QuadTree) Insert(e Entity) {
 	}
 }
 
-
 func (qt *QuadTree) Draw(screen *ebiten.Image) {
-    halfW := qt.Boundary.Width / 2
+	halfW := qt.Boundary.Width / 2
 	halfH := qt.Boundary.Height / 2
 	x1 := float32(qt.Boundary.X - halfW)
 	x2 := float32(qt.Boundary.X + halfW)
@@ -84,14 +81,13 @@ func (qt *QuadTree) Draw(screen *ebiten.Image) {
 	vector.StrokeLine(screen, x1, y2, x2, y2, strokeWidth, lineColor, false)
 	vector.StrokeLine(screen, x1, y1, x1, y2, strokeWidth, lineColor, false)
 	vector.StrokeLine(screen, x2, y1, x2, y2, strokeWidth, lineColor, false)
-    if qt.IsDivided {
+	if qt.IsDivided {
 		qt.NorthWest.Draw(screen)
 		qt.NorthEast.Draw(screen)
 		qt.SouthWest.Draw(screen)
 		qt.SouthEast.Draw(screen)
-    }
+	}
 }
-
 
 func (qt *QuadTree) Query(searchArea *Boundary) []Entity {
 	found := []Entity{}
@@ -105,10 +101,10 @@ func (qt *QuadTree) Query(searchArea *Boundary) []Entity {
 		found = append(found, qt.SouthEast.Query(searchArea)...)
 	} else {
 		for _, e := range qt.Entities {
-			if searchArea.Contains(e.GetPosition()) {
+			if !e.IsDead() && searchArea.Contains(e.GetPosition()) {
 				found = append(found, e)
 			}
 		}
 	}
 	return found
-} 
+}
