@@ -19,8 +19,13 @@ func (w *World) StartGlobalGrassSpawnCooldown() {
 	w.GlobalGrassSpawnCooldown = GLOBAL_GRASS_SPAWN_INTERVAL
 }
 
-func (w *World) SpawnGlobalGrass() (newGrass Entity) {
-	newGrass = NewGrass(Position{X: rand.Float64() * w.WorldBoundary.Width, Y: rand.Float64() * w.WorldBoundary.Height})
+func (w *World) SpawnGlobalGrass() (newGrass []Entity) {
+	for range GLOBAL_GRASS_SPAWN_COUNT {
+		newGrass = append(newGrass, NewGrass(&Position{
+			X: rand.Float64() * w.WorldBoundary.Width,
+			Y: rand.Float64() * w.WorldBoundary.Height,
+		}))
+	}
 	w.StartGlobalGrassSpawnCooldown()
 	return
 }

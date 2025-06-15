@@ -7,9 +7,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
+const MAX_DEPTH = 100
+
 type QuadTree struct {
 	Boundary  *Boundary
 	Capacity  int
+	Depth     int
 	Entities  []Entity
 	NorthWest *QuadTree
 	NorthEast *QuadTree
@@ -18,10 +21,11 @@ type QuadTree struct {
 	IsDivided bool
 }
 
-func NewQuadTree(Boundary *Boundary, capacity int) *QuadTree {
+func NewQuadTree(Boundary *Boundary, capacity int, depth int) *QuadTree {
 	return &QuadTree{
 		Boundary:  Boundary,
 		Capacity:  capacity,
+		Depth:     depth,
 		IsDivided: false,
 	}
 }
@@ -31,10 +35,11 @@ func (qt *QuadTree) Subdivide() {
 	newHeight := qt.Boundary.Height / 2
 	halfNewWidth := newWidth / 2
 	halfNewHeight := newHeight / 2
-	qt.NorthWest = NewQuadTree(NewBoundary(qt.Boundary.X-halfNewWidth, qt.Boundary.Y-halfNewHeight, newWidth, newHeight), qt.Capacity)
-	qt.NorthEast = NewQuadTree(NewBoundary(qt.Boundary.X+halfNewWidth, qt.Boundary.Y-halfNewHeight, newWidth, newHeight), qt.Capacity)
-	qt.SouthWest = NewQuadTree(NewBoundary(qt.Boundary.X-halfNewWidth, qt.Boundary.Y+halfNewHeight, newWidth, newHeight), qt.Capacity)
-	qt.SouthEast = NewQuadTree(NewBoundary(qt.Boundary.X+halfNewWidth, qt.Boundary.Y+halfNewHeight, newWidth, newHeight), qt.Capacity)
+	nextDepth := qt.Depth + 1
+	qt.NorthWest = NewQuadTree(NewBoundary(qt.Boundary.X-halfNewWidth, qt.Boundary.Y-halfNewHeight, newWidth, newHeight), qt.Capacity, nextDepth)
+	qt.NorthEast = NewQuadTree(NewBoundary(qt.Boundary.X+halfNewWidth, qt.Boundary.Y-halfNewHeight, newWidth, newHeight), qt.Capacity, nextDepth)
+	qt.SouthWest = NewQuadTree(NewBoundary(qt.Boundary.X-halfNewWidth, qt.Boundary.Y+halfNewHeight, newWidth, newHeight), qt.Capacity, nextDepth)
+	qt.SouthEast = NewQuadTree(NewBoundary(qt.Boundary.X+halfNewWidth, qt.Boundary.Y+halfNewHeight, newWidth, newHeight), qt.Capacity, nextDepth)
 	qt.IsDivided = true
 
 	for _, e := range qt.Entities {
@@ -47,8 +52,10 @@ func (qt *QuadTree) Subdivide() {
 func (qt *QuadTree) Insert(e Entity) {
 	if !qt.Boundary.Contains(e.GetPosition()) {
 		return
-	}
-	if !qt.IsDivided {
+	} else if qt.Depth >= MAX_DEPTH {
+		qt.Entities = append(qt.Entities, e)
+		return
+	} else if !qt.IsDivided {
 		if len(qt.Entities) < qt.Capacity {
 			qt.Entities = append(qt.Entities, e)
 			return

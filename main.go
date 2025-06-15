@@ -16,7 +16,8 @@ type Game struct {
 	IsInitialized, IsPaused   bool
 }
 
-const GLOBAL_GRASS_SPAWN_INTERVAL = 120
+const GLOBAL_GRASS_SPAWN_INTERVAL = 2
+const GLOBAL_GRASS_SPAWN_COUNT = 1
 
 func (g *Game) Update() error {
 
@@ -31,7 +32,7 @@ func (g *Game) Update() error {
 		}
 
 		if g.World.IsGlobalGrassReadyToSpawn() {
-			newlyBorn = append(newlyBorn, g.World.SpawnGlobalGrass())
+			newlyBorn = append(newlyBorn, g.World.SpawnGlobalGrass()...)
 		} else {
 			g.World.GlobalGrassSpawnCooldown--
 		}
@@ -43,7 +44,7 @@ func (g *Game) Update() error {
 		g.IsInitialized = true
 	}
 
-	g.World.Quadtree = NewQuadTree(g.World.WorldBoundary, g.Capacity)
+	g.World.Quadtree = NewQuadTree(g.World.WorldBoundary, g.Capacity, 0)
 	for _, entity := range g.World.GetAllEntities() {
 		g.World.Quadtree.Insert(entity)
 	}
@@ -83,23 +84,23 @@ func main() {
 
 	initialGrass := []*Grass{}
 	for i := 0; i < 1000; i++ {
-		initialGrass = append(initialGrass, NewGrass(Position{
+		initialGrass = append(initialGrass, NewGrass(&Position{
 			X: rand.Float64() * f64ScreenWidth,
 			Y: rand.Float64() * f64ScreenHeight,
 		}))
 	}
 
 	initialRabbits := []*Rabbit{}
-	for i := 0; i < 3000; i++ {
-		initialRabbits = append(initialRabbits, NewRabbit(Position{
+	for i := 0; i < 2000; i++ {
+		initialRabbits = append(initialRabbits, NewRabbit(&Position{
 			X: rand.Float64() * f64ScreenWidth,
 			Y: rand.Float64() * f64ScreenHeight,
 		}))
 	}
 
 	initialFoxes := []*Fox{}
-	for i := 0; i < 200; i++ {
-		initialFoxes = append(initialFoxes, NewFox(Position{
+	for i := 0; i < 2; i++ {
+		initialFoxes = append(initialFoxes, NewFox(&Position{
 			X: rand.Float64() * f64ScreenWidth,
 			Y: rand.Float64() * f64ScreenHeight,
 		}))

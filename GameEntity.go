@@ -8,13 +8,14 @@ import (
 )
 
 type GameEntity struct {
-	Pos    Position
+	Pos    *Position
 	Color  color.Color
 	Radius float32
+	isDead bool
 }
 
 func (e *GameEntity) GetPosition() *Position {
-	return &e.Pos
+	return e.Pos
 }
 
 func (e *GameEntity) GetRadius() float64 {
@@ -27,6 +28,14 @@ func (e *GameEntity) IsInRange(other Entity) bool {
 
 	distSq := e.Pos.CalculateDistanceSquared(targetPos)
 	return distSq <= interactionDistance*interactionDistance
+}
+
+func (e *GameEntity) Die() {
+	e.isDead = true
+}
+
+func (e *GameEntity) IsDead() bool {
+	return e.isDead
 }
 
 func (e *GameEntity) Draw(screen *ebiten.Image) {

@@ -1,6 +1,12 @@
 package main
 
+import (
+	"math"
+	"math/rand"
+)
+
 type LivingEntity struct {
+	GameEntity
 	Speed,
 	SeeingRange,
 	Energy,
@@ -8,7 +14,6 @@ type LivingEntity struct {
 	EnergyToReproduce float64
 	ReproductionCooldown,
 	MaxCooldown int
-	isDead bool
 }
 
 func (e *LivingEntity) RecoverFromReproduction() {
@@ -29,14 +34,6 @@ func (e *LivingEntity) Metabolise() {
 	e.RecoverFromReproduction()
 }
 
-func (e *LivingEntity) Die() {
-	e.isDead = true
-}
-
-func (e *LivingEntity) IsDead() bool {
-	return e.isDead
-}
-
 func (e *LivingEntity) IsHungry() bool {
 	return (e.Energy / e.MaxEnergy) < 0.3
 }
@@ -51,4 +48,49 @@ func (e *LivingEntity) RecoverEnergy() {
 
 func (e *LivingEntity) StartReproductionCooldown() {
 	e.ReproductionCooldown = e.MaxCooldown
+}
+
+func (e *LivingEntity) RandomMove() {
+	deltaX := ((rand.Float64() * 2) - 1) * e.Speed
+	deltaY := ((rand.Float64() * 2) - 1) * e.Speed
+	e.Pos.Move(deltaX, deltaY)
+}
+
+func (e *LivingEntity) MoveToward(other Entity) {
+	pos := e.GetPosition()
+	targetPos := other.GetPosition()
+
+	directionX := targetPos.X - pos.X
+	directionY := targetPos.Y - pos.Y
+
+	length := math.Sqrt(directionX*directionX + directionY*directionY)
+	if length > 0 {
+		moveX := (directionX / length) * e.Speed
+		moveY := (directionY / length) * e.Speed
+		pos.Move(moveX, moveY)
+	}
+}
+
+func (e *LivingEntity) MoveAwayFrom(other Entity) {
+	pos := e.GetPosition()
+	otherPos := other.GetPosition()
+
+	directionX := pos.X - otherPos.X
+	directionY := pos.Y - otherPos.Y
+
+	length := math.Sqrt(directionX*directionX + directionY*directionY)
+	if length > 0 {
+		moveX := (directionX / length) * e.Speed
+		moveY := (directionY / length) * e.Speed
+		pos.Move(moveX, moveY)
+	}
+}
+
+func (e *LivingEntity) IsDangerouslyClose(other Entity) bool {
+	pos := e.GetPosition()
+	otherPos := other.GetPosition()
+
+	distSq := pos.CalculateDistanceSquared(otherPos)
+	halfSeeingRange := e.SeeingRange / 2
+	return distSq < halfSeeingRange*halfSeeingRange
 }
