@@ -13,6 +13,9 @@ type World struct {
 	WorldBoundary      *Boundary
 	Config             *config.SimulationConfig
 	GrassSpawnCooldown int
+	RabbitHistory      []int
+	FoxHistory         []int
+	GrassHistory       []int
 }
 
 func (w *World) IsGrassReadyToSpawn() bool {
