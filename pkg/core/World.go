@@ -1,32 +1,36 @@
-package main
+package core
 
-import "math/rand/v2"
+import (
+	"ProjektGO/pkg/config"
+	"math/rand/v2"
+)
 
 type World struct {
-	Quadtree                 *QuadTree
-	Rabbits                  []*Rabbit
-	Foxes                    []*Fox
-	Grass                    []*Grass
-	WorldBoundary            *Boundary
-	GlobalGrassSpawnCooldown int
+	Quadtree           *QuadTree
+	Rabbits            []*Rabbit
+	Foxes              []*Fox
+	Grass              []*Grass
+	WorldBoundary      *Boundary
+	Config             *config.SimulationConfig
+	GrassSpawnCooldown int
 }
 
-func (w *World) IsGlobalGrassReadyToSpawn() bool {
-	return w.GlobalGrassSpawnCooldown <= 0
+func (w *World) IsGrassReadyToSpawn() bool {
+	return w.GrassSpawnCooldown <= 0
 }
 
-func (w *World) StartGlobalGrassSpawnCooldown() {
-	w.GlobalGrassSpawnCooldown = GLOBAL_GRASS_SPAWN_INTERVAL
+func (w *World) StartGrassSpawnCooldown() {
+	w.GrassSpawnCooldown = w.Config.GrassParams.GrassSpawnInterval
 }
 
-func (w *World) SpawnGlobalGrass() (newGrass []Entity) {
-	for range GLOBAL_GRASS_SPAWN_COUNT {
+func (w *World) SpawnGrass() (newGrass []Entity) {
+	for range w.Config.GrassParams.GrassSpawnCount {
 		newGrass = append(newGrass, NewGrass(&Position{
 			X: rand.Float64() * w.WorldBoundary.Width,
 			Y: rand.Float64() * w.WorldBoundary.Height,
 		}))
 	}
-	w.StartGlobalGrassSpawnCooldown()
+	w.StartGrassSpawnCooldown()
 	return
 }
 

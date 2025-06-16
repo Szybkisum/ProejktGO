@@ -1,6 +1,7 @@
-package main
+package core
 
 import (
+	"ProjektGO/pkg/config"
 	"fmt"
 	"log"
 	"math/rand"
@@ -16,9 +17,6 @@ type Game struct {
 	IsInitialized, IsPaused   bool
 }
 
-const GLOBAL_GRASS_SPAWN_INTERVAL = 2
-const GLOBAL_GRASS_SPAWN_COUNT = 1
-
 func (g *Game) Update() error {
 
 	if g.IsInitialized {
@@ -31,10 +29,10 @@ func (g *Game) Update() error {
 			}
 		}
 
-		if g.World.IsGlobalGrassReadyToSpawn() {
-			newlyBorn = append(newlyBorn, g.World.SpawnGlobalGrass()...)
+		if g.World.IsGrassReadyToSpawn() {
+			newlyBorn = append(newlyBorn, g.World.SpawnGrass()...)
 		} else {
-			g.World.GlobalGrassSpawnCooldown--
+			g.World.GrassSpawnCooldown--
 		}
 
 		g.World.RemoveDeadEntities()
@@ -72,7 +70,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return g.ScreenWidth, g.ScreenHeight
 }
 
-func main() {
+func RunSimulation(cfg *config.SimulationConfig) {
 	screenWidth := 900
 	screenHeight := 900
 
@@ -83,7 +81,7 @@ func main() {
 	ebiten.SetWindowTitle("Lisy i Króliki")
 
 	initialGrass := []*Grass{}
-	for i := 0; i < 1000; i++ {
+	for range cfg.InitialGrass {
 		initialGrass = append(initialGrass, NewGrass(&Position{
 			X: rand.Float64() * f64ScreenWidth,
 			Y: rand.Float64() * f64ScreenHeight,
@@ -91,19 +89,19 @@ func main() {
 	}
 
 	initialRabbits := []*Rabbit{}
-	for i := 0; i < 2000; i++ {
+	for range cfg.InitialRabbits {
 		initialRabbits = append(initialRabbits, NewRabbit(&Position{
 			X: rand.Float64() * f64ScreenWidth,
 			Y: rand.Float64() * f64ScreenHeight,
-		}))
+		}, &cfg.RabbitParams))
 	}
 
 	initialFoxes := []*Fox{}
-	for i := 0; i < 2; i++ {
+	for range cfg.InitialFoxes {
 		initialFoxes = append(initialFoxes, NewFox(&Position{
 			X: rand.Float64() * f64ScreenWidth,
 			Y: rand.Float64() * f64ScreenHeight,
-		}))
+		}, &cfg.FoxParams))
 	}
 	worldBoundary := &Boundary{
 		X:      f64ScreenWidth / 2,
@@ -116,7 +114,14 @@ func main() {
 		ScreenWidth:  screenWidth,
 		ScreenHeight: screenHeight,
 		Capacity:     4,
-		World:        &World{Grass: initialGrass, Rabbits: initialRabbits, Foxes: initialFoxes, WorldBoundary: worldBoundary, GlobalGrassSpawnCooldown: GLOBAL_GRASS_SPAWN_INTERVAL},
+		World: &World{
+			Grass:              initialGrass,
+			Rabbits:            initialRabbits,
+			Foxes:              initialFoxes,
+			WorldBoundary:      worldBoundary,
+			Config:             cfg,
+			GrassSpawnCooldown: cfg.GrassParams.GrassSpawnInterval,
+		},
 	}
 
 	if err := ebiten.RunGame(g); err != nil {

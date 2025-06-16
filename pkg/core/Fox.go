@@ -1,6 +1,7 @@
-package main
+package core
 
 import (
+	"ProjektGO/pkg/config"
 	"image/color"
 	"math/rand"
 )
@@ -9,7 +10,7 @@ type Fox struct {
 	LivingEntity
 }
 
-func NewFox(pos *Position) *Fox {
+func NewFox(pos *Position, cfg *config.FoxConfig) *Fox {
 	return &Fox{
 		LivingEntity: LivingEntity{
 			GameEntity: GameEntity{
@@ -18,13 +19,13 @@ func NewFox(pos *Position) *Fox {
 				Radius: 1.5,
 				isDead: false,
 			},
-			Speed:                2,
-			SeeingRange:          75.0,
-			Energy:               750.0,
-			MaxEnergy:            1500.0,
-			EnergyToReproduce:    1000.0,
+			Speed:                cfg.Speed,
+			SeeingRange:          cfg.SeeingRange,
+			CurrentEnergy:        cfg.InitialEnergy,
+			MaxEnergy:            cfg.MaxEnergy,
+			EnergyToReproduce:    cfg.EnergyToReproduce,
 			ReproductionCooldown: 0,
-			MaxCooldown:          600,
+			MaxCooldown:          cfg.ReproductionCooldown,
 		},
 	}
 }
@@ -42,16 +43,16 @@ func (f *Fox) TargetFood(r *Rabbit) {
 	}
 }
 
-func (f *Fox) TargetPartner(other *Fox) (newEntity Entity) {
+func (f *Fox) TargetPartner(other *Fox, w *World) (newEntity Entity) {
 	if f.IsInRange(other) {
-		newEntity = f.Reproduce(other)
+		newEntity = f.Reproduce(other, w)
 	} else {
 		f.MoveToward(other)
 	}
 	return
 }
 
-func (f *Fox) Reproduce(other *Fox) (newEntity Entity) {
+func (f *Fox) Reproduce(other *Fox, w *World) (newEntity Entity) {
 	otherPos := other.GetPosition()
 
 	midpointX := (f.Pos.X + otherPos.X) / 2
@@ -61,7 +62,7 @@ func (f *Fox) Reproduce(other *Fox) (newEntity Entity) {
 	offsetY := (rand.Float64()*2 - 1) * 2.0
 
 	newPos := &Position{X: midpointX + offsetX, Y: midpointY + offsetY}
-	newEntity = NewFox(newPos)
+	newEntity = NewFox(newPos, &w.Config.FoxParams)
 
 	f.StartReproductionCooldown()
 	other.StartReproductionCooldown()
@@ -81,7 +82,7 @@ func (f *Fox) Update(w *World) (newEntity Entity) {
 	if f.IsHungry() && rabbit != nil {
 		f.TargetFood(rabbit)
 	} else if f.IsReadyToReproduce() && fox != nil {
-		if newEntity = f.TargetPartner(fox); newEntity != nil {
+		if newEntity = f.TargetPartner(fox, w); newEntity != nil {
 			w.WorldBoundary.FitIntoBoundary(newEntity.GetPosition())
 		}
 	} else {

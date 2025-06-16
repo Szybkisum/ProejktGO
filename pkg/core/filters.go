@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"math"
@@ -33,7 +33,7 @@ func filterRabbitInterests(source Entity, nearbyEntities []Entity) (rabbit *Rabb
 
 	processor := func(candidate Entity, distSq float64) {
 		switch identifiedEntity := candidate.(type) {
-		case *Rabbit :
+		case *Rabbit:
 			if closestRabbitDistanceSq >= distSq && identifiedEntity.IsReadyToReproduce() && identifiedEntity != source {
 				closestRabbitDistanceSq = distSq
 				rabbit = identifiedEntity

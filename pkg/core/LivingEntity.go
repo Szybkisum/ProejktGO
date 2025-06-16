@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"math"
@@ -8,10 +8,10 @@ import (
 type LivingEntity struct {
 	GameEntity
 	Speed,
-	SeeingRange,
-	Energy,
+	SeeingRange float64
+	CurrentEnergy,
 	MaxEnergy,
-	EnergyToReproduce float64
+	EnergyToReproduce,
 	ReproductionCooldown,
 	MaxCooldown int
 }
@@ -23,27 +23,27 @@ func (e *LivingEntity) RecoverFromReproduction() {
 }
 
 func (e *LivingEntity) BurnEnergy() {
-	e.Energy--
+	e.CurrentEnergy--
 }
 
 func (e *LivingEntity) Metabolise() {
 	e.BurnEnergy()
-	if e.Energy <= 0 {
+	if e.CurrentEnergy <= 0 {
 		e.Die()
 	}
 	e.RecoverFromReproduction()
 }
 
 func (e *LivingEntity) IsHungry() bool {
-	return (e.Energy / e.MaxEnergy) < 0.3
+	return (float64(e.CurrentEnergy) / float64(e.MaxEnergy)) < 0.3
 }
 
 func (e *LivingEntity) IsReadyToReproduce() bool {
-	return e.ReproductionCooldown <= 0 && e.Energy >= e.EnergyToReproduce
+	return e.ReproductionCooldown <= 0 && e.CurrentEnergy >= e.EnergyToReproduce
 }
 
 func (e *LivingEntity) RecoverEnergy() {
-	e.Energy = e.MaxEnergy
+	e.CurrentEnergy = e.MaxEnergy
 }
 
 func (e *LivingEntity) StartReproductionCooldown() {
