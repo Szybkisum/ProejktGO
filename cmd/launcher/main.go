@@ -60,7 +60,7 @@ func main() {
 	rabbitSpeedEntry.Validator = floatRangeValidator(0.1, 10.0)
 
 	rabbitSeeingRangeEntry := widget.NewEntryWithData(uiModel.RabbitSeeingRange)
-	rabbitSeeingRangeEntry.Validator = floatRangeValidator(0.1, 900.0)
+	rabbitSeeingRangeEntry.Validator = floatRangeValidator(0.1, 800.0)
 
 	rabbitInitialEnergyEntry := widget.NewEntryWithData(uiModel.RabbitInitialEnergy)
 	rabbitInitialEnergyEntry.Validator = integerRangeValidator(1, 10000)
@@ -78,7 +78,7 @@ func main() {
 	foxSpeedEntry.Validator = floatRangeValidator(0.1, 10.0)
 
 	foxSeeingRangeEntry := widget.NewEntryWithData(uiModel.FoxSeeingRange)
-	foxSeeingRangeEntry.Validator = floatRangeValidator(0.1, 900.0)
+	foxSeeingRangeEntry.Validator = floatRangeValidator(0.1, 800.0)
 
 	foxInitialEnergyEntry := widget.NewEntryWithData(uiModel.FoxInitialEnergy)
 	foxInitialEnergyEntry.Validator = integerRangeValidator(1, 10000)
@@ -138,7 +138,7 @@ func main() {
 
 		config.SaveConfig(finalConfig)
 
-		cmd := exec.Command("./simulation.exe")
+		cmd := exec.Command("./simulation")
 		err := cmd.Start()
 		if err != nil {
 			log.Fatal("Błąd uruchomienia symulacji:", err)
